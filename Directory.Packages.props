@@ -4,5 +4,6 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageVersion Include="DalamudPackager" Version="2.1.12" />
+		<PackageVersion Include="Discord.Net" Version="3.13.1" />
 	</ItemGroup>
 </Project>

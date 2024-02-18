@@ -9,6 +9,9 @@
 		<PackageReference Include="DalamudPackager" />
 	</ItemGroup>
 	<ItemGroup>
+		<ProjectReference Include="..\DiscordModule\DiscordModule.csproj" />
+	</ItemGroup>
+	<ItemGroup>
 		<Reference Include="FFXIVClientStructs">
 			<HintPath>$(DalamudDirectory)FFXIVClientStructs.dll</HintPath>
 			<Private>false</Private>

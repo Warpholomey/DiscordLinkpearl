@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Title>DiscordModule</Title>
+		<RootNamespace>DiscordModule</RootNamespace>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Discord.Net" />
+	</ItemGroup>
+</Project>
