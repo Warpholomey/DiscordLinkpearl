@@ -34,7 +34,7 @@ public sealed class Plugin : IDalamudPlugin
 			HelpMessage = "Show settings window.",
 		});
 
-		_configuration.OnConfigurationChanged += () =>
+		_configuration.OnConfigurationChanged += _ =>
 		{
 			_services.PluginInterface.SavePluginConfig(_configuration);
 		};
@@ -54,9 +54,12 @@ public sealed class Plugin : IDalamudPlugin
 		}
 	}
 
-	private void TryRestartDiscordModule()
+	private void TryRestartDiscordModule(bool shouldRestartDiscordModule = true)
 	{
-		_services.DiscordModuleManager.TryRestartDiscordModule(_configuration.DiscordKey);
+		if (shouldRestartDiscordModule)
+		{
+			_services.DiscordModuleManager.TryRestartDiscordModule(_configuration);
+		}
 	}
 
 	private void OpenConfigurationWindow()

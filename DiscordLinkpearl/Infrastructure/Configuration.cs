@@ -1,10 +1,12 @@
 using Dalamud.Configuration;
 
+using DiscordModule;
+
 using System.Collections.Generic;
 
 namespace DiscordLinkpearl;
 
-public sealed partial class Configuration : IPluginConfiguration
+public sealed partial class Configuration : IManagedConfiguration, IPluginConfiguration
 {
 	private readonly List<ConfigurationChanged> _onConfigurationChangedHandlers = [];
 
@@ -25,9 +27,9 @@ public sealed partial class Configuration : IPluginConfiguration
 
 	private event ConfigurationChanged? OnConfigurationChangedCore;
 
-	public void Save()
+	public void Save(bool restartDiscordModule = false)
 	{
-		OnConfigurationChangedCore?.Invoke();
+		OnConfigurationChangedCore?.Invoke(restartDiscordModule);
 	}
 
 	public void ClearHandlers()
@@ -38,5 +40,5 @@ public sealed partial class Configuration : IPluginConfiguration
 		}
 	}
 
-	public delegate void ConfigurationChanged();
+	public delegate void ConfigurationChanged(bool restartDiscordModule);
 }

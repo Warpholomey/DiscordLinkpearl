@@ -1,5 +1,4 @@
 using Discord;
-using Discord.WebSocket;
 
 using System;
 using System.Threading;
@@ -9,14 +8,13 @@ namespace DiscordModule;
 
 public sealed class DiscordModuleManager
 {
-	private const TokenType DiscordTokenType = TokenType.Bot;
-
+	private DiscordService? _discordService;
 	private CancellationTokenSource? _cancellationTokenSource;
-	private readonly DiscordSocketClient _discordSocketClient = new();
 
 	public static ulong RequiredPermissionsCode => (ulong) Convert.ChangeType(RequiredPermissions, typeof(ulong));
-	public ConnectionState ConnectionState => _discordSocketClient.ConnectionState;
-	public ulong DiscordId { get; private set; }
+	public ConnectionState ConnectionState => _discordService?.ConnectionState ?? ConnectionState.Disconnected;
+	public ulong DiscordId => _discordService?.DiscordId ?? default;
+	public string? GuildName => _discordService?.GuildName;
 
 	public static GuildPermission RequiredPermissions =>
 		GuildPermission.ViewChannel |
@@ -36,28 +34,19 @@ public sealed class DiscordModuleManager
 		_cancellationTokenSource?.Cancel();
 	}
 
-	public void TryRestartDiscordModule(string discordKey)
+	public void TryRestartDiscordModule(IManagedConfiguration managedConfiguration)
 	{
 		TryStopDiscordModule();
+
+		if (string.IsNullOrWhiteSpace(managedConfiguration.DiscordKey))
+		{
+			return;
+		}
+
 		_cancellationTokenSource = new();
+		_discordService = new DiscordService(managedConfiguration);
 		Task.Run(
-			async() => await DiscordConnectionHandler(discordKey, _cancellationTokenSource.Token),
+			async() => await _discordService.DiscordConnectionHandlerAsync(_cancellationTokenSource.Token),
 			_cancellationTokenSource.Token);
-	}
-
-	private async Task DiscordConnectionHandler(string discordKey, CancellationToken cancellationToken)
-	{
-		await _discordSocketClient.LoginAsync(DiscordTokenType, discordKey);
-
-		await _discordSocketClient.StartAsync();
-		_discordSocketClient.Connected += OnDiscordSocketClientConnected;
-		cancellationToken.WaitHandle.WaitOne();
-		await _discordSocketClient.StopAsync();
-	}
-
-	private Task OnDiscordSocketClientConnected()
-	{
-		DiscordId = _discordSocketClient.CurrentUser.Id;
-		return Task.CompletedTask;
 	}
 }

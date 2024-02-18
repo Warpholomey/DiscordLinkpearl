@@ -33,7 +33,12 @@ public sealed class PluginConfigurationWindow(DiscordModuleManager discordModule
 
 		ImGui.Begin("Discord Linkpearl Settings", ref _isVisible, ImGuiWindowFlags.AlwaysAutoResize);
 
-		ImGui.InputText("Discord Key", ref _discordKey, 100);
+		ImGui.InputText("Discord Key", ref _discordKey, 100, ImGuiInputTextFlags.Password);
+
+		if (_discordModuleManager.GuildName != null)
+		{
+			ImGui.Text($"Guild: {_discordModuleManager.GuildName}");
+		}
 
 		if (ImGui.Button("Close"))
 		{
@@ -46,7 +51,7 @@ public sealed class PluginConfigurationWindow(DiscordModuleManager discordModule
 		if (ImGui.Button("Apply"))
 		{
 			_configuration.DiscordKey = _discordKey;
-			_configuration.Save();
+			_configuration.Save(true);
 		}
 
 		ImGui.SameLine();
