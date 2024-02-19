@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<Title>DiscordModuleDebugger</Title>
+		<RootNamespace>DiscordModuleDebugger</RootNamespace>
+	</PropertyGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\DiscordModule\DiscordModule.csproj" />
+	</ItemGroup>
+</Project>

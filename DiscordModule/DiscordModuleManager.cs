@@ -49,4 +49,15 @@ public sealed class DiscordModuleManager
 			async() => await _discordService.DiscordConnectionHandlerAsync(_cancellationTokenSource.Token),
 			_cancellationTokenSource.Token);
 	}
+
+	public void TrySendMessage(string userId, string userName, string message)
+	{
+		if (_discordService == null || _cancellationTokenSource == null)
+		{
+			return;
+		}
+
+		_discordService.MessageQueue.Enqueue(
+			new QueueMessage(userId, userName, message));
+	}
 }
