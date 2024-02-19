@@ -58,17 +58,15 @@ public sealed class DiscordService(IManagedConfiguration managedConfiguration)
 	{
 		var guild = _discordSocketClient.GetGuild(_managedConfiguration.GuildId);
 
-		var channel = guild.Channels.OfType<ITextChannel>().FirstOrDefault(c => c.Topic == GetChannelTopicForUser())
+		var channel = guild.Channels.OfType<ITextChannel>().FirstOrDefault(c => userId.Equals(c.Topic))
 			?? await guild.CreateTextChannelAsync(userName, ConfigureChannel);
 
 		return channel;
 
 		void ConfigureChannel(TextChannelProperties properties)
 		{
-			properties.Topic = GetChannelTopicForUser();
+			properties.Topic = userId;
 		}
-
-		string GetChannelTopicForUser() => $"DO NOT EDIT! {userId}";
 	}
 
 	private async void RunMessageProcessingAsync(CancellationToken cancellationToken)
