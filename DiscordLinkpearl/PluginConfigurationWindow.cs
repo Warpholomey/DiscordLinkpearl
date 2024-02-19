@@ -34,12 +34,9 @@ public sealed class PluginConfigurationWindow(DiscordModuleManager discordModule
 
 		ImGui.Begin("Discord Linkpearl Settings", ref _isVisible, ImGuiWindowFlags.AlwaysAutoResize);
 
+		ImGui.PushItemWidth(500);
 		ImGui.InputText("Discord Key", ref _discordKey, 100, ImGuiInputTextFlags.Password);
-
-		if (_discordModuleManager.GuildName != null)
-		{
-			ImGui.Text($"Guild: {_discordModuleManager.GuildName}");
-		}
+		ImGui.PopItemWidth();
 
 		ImGui.Checkbox("Enabled?", ref _isEnabled);
 
@@ -75,7 +72,11 @@ public sealed class PluginConfigurationWindow(DiscordModuleManager discordModule
 
 		ImGui.SameLine();
 
-		ImGui.TextColored(GetStatusColor(_discordModuleManager.ConnectionState), $"Status: {_discordModuleManager.ConnectionState}");
+		var info = _discordModuleManager.ConnectionState == ConnectionState.Connected && _discordModuleManager.GuildName != null
+			? $"Authorized ({_discordModuleManager.GuildName})"
+			: _discordModuleManager.ConnectionState.ToString();
+
+		ImGui.TextColored(GetStatusColor(_discordModuleManager.ConnectionState), $"Status: {info}");
 
 		ImGui.End();
 	}
