@@ -1,11 +1,13 @@
 using Dalamud.Game.Command;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin;
 
 using DiscordModule;
 
 using System;
+using System.Linq;
 
 namespace DiscordLinkpearl;
 
@@ -34,6 +36,11 @@ public sealed class Plugin : IDalamudPlugin
 			HelpMessage = "Show settings window.",
 		});
 
+		_services.CommandManager.AddHandler("/dlp", new CommandInfo((command, args) => ToggleMessagesRouting())
+		{
+			HelpMessage = "Toggle messages routing.",
+		});
+
 		_configuration.OnConfigurationChanged += _ =>
 		{
 			_services.PluginInterface.SavePluginConfig(_configuration);
@@ -48,9 +55,38 @@ public sealed class Plugin : IDalamudPlugin
 
 	private void OnChatGuiChatMessageReceived(XivChatType messageType, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
 	{
-		if (isHandled)
+		if (isHandled || _services.ClientState.LocalPlayer == null)
 		{
 			return;
+		}
+
+		if (messageType == XivChatType.TellIncoming)
+		{
+			string userId;
+			string userName;
+
+			if (sender.Payloads.FirstOrDefault(p => p.Type == PayloadType.Player) is PlayerPayload playerLink)
+			{
+				userId = playerLink.PlayerName + "@" + playerLink.World.Name.RawString;
+				userName = playerLink.PlayerName;
+			}
+			else
+			{
+				if (sender.TextValue.Contains(_services.ClientState.LocalPlayer.Name.TextValue))
+				{
+					userId = "me";
+					userName = _services.ClientState.LocalPlayer.Name.TextValue;
+				}
+				else
+				{
+					return;
+				}
+			}
+
+			_services.DiscordModuleManager.TrySendMessage(
+				userId,
+				userName,
+				message.TextValue);
 		}
 	}
 
@@ -67,11 +103,28 @@ public sealed class Plugin : IDalamudPlugin
 		_pluginConfigurationWindow.Show();
 	}
 
+	private void ToggleMessagesRouting()
+	{
+		_configuration.IsEnabled = !_configuration.IsEnabled;
+
+		if (_configuration.IsEnabled)
+		{
+			_services.ChatGui.Print("Discord Linkpearl was enabled!");
+		}
+		else
+		{
+			_services.ChatGui.Print("Discord Linkpearl was disabled!");
+		}
+
+		_configuration.Save(true);
+	}
+
 	public void Dispose()
 	{
 		_services.ChatGui.ChatMessage -= OnChatGuiChatMessageReceived;
 		_services.DiscordModuleManager.TryStopDiscordModule();
 		_configuration.ClearHandlers();
+		_services.CommandManager.RemoveHandler("/dlp");
 		_services.CommandManager.RemoveHandler("/discordlinkpearl");
 		_services.PluginInterface.UiBuilder.Draw -= _pluginConfigurationWindow.Draw;
 		_services.PluginInterface.UiBuilder.OpenConfigUi -= OpenConfigurationWindow;

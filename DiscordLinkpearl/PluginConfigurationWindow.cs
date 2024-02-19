@@ -18,6 +18,7 @@ public sealed class PluginConfigurationWindow(DiscordModuleManager discordModule
 	private readonly Configuration _configuration = configuration;
 
 	private string _discordKey = configuration.DiscordKey;
+	private bool _isEnabled = configuration.IsEnabled;
 
 	public void Show()
 	{
@@ -40,9 +41,14 @@ public sealed class PluginConfigurationWindow(DiscordModuleManager discordModule
 			ImGui.Text($"Guild: {_discordModuleManager.GuildName}");
 		}
 
+		ImGui.Checkbox("Enabled?", ref _isEnabled);
+
+		ImGui.SameLine();
+
 		if (ImGui.Button("Close"))
 		{
 			_discordKey = _configuration.DiscordKey;
+			_isEnabled = _configuration.IsEnabled;
 			_isVisible = false;
 		}
 
@@ -51,6 +57,7 @@ public sealed class PluginConfigurationWindow(DiscordModuleManager discordModule
 		if (ImGui.Button("Apply"))
 		{
 			_configuration.DiscordKey = _discordKey;
+			_configuration.IsEnabled = _isEnabled;
 			_configuration.Save(true);
 		}
 

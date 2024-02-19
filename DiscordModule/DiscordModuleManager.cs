@@ -38,7 +38,7 @@ public sealed class DiscordModuleManager
 	{
 		TryStopDiscordModule();
 
-		if (string.IsNullOrWhiteSpace(managedConfiguration.DiscordKey))
+		if (!managedConfiguration.IsEnabled || string.IsNullOrWhiteSpace(managedConfiguration.DiscordKey))
 		{
 			return;
 		}
