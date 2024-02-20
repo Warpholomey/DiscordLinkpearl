@@ -6,6 +6,11 @@ using Dalamud.Plugin;
 
 using DiscordModule;
 
+using ECommons;
+using ECommons.Automation;
+
+using FFXIVClientStructs.FFXIV.Component.GUI;
+
 using System;
 using System.Linq;
 
@@ -20,6 +25,8 @@ public sealed class Plugin : IDalamudPlugin
 		_services = dalamudPluginInterface.Create<Services>()
 			?? throw new InvalidOperationException(
 				"Error initializing services!");
+
+		ECommonsMain.Init(_services.PluginInterface, this);
 
 		_services.PluginInterface.UiBuilder.OpenConfigUi += OpenConfigurationWindow;
 		_services.PluginInterface.UiBuilder.Draw += _services.PluginConfigurationWindow.Draw;
@@ -42,9 +49,13 @@ public sealed class Plugin : IDalamudPlugin
 		_services.ChatGui.ChatMessage += OnChatGuiChatMessageReceived;
 	}
 
-	private void DiscordModuleManagerOnDiscordMessage(DiscordMessage discordMessage)
+	private unsafe void DiscordModuleManagerOnDiscordMessage(DiscordMessage discordMessage)
 	{
-		if (discordMessage.Topic == "me")
+		if (_services.ClientState.LocalPlayer == null)
+		{
+			return;
+		}
+		else if (discordMessage.Topic == "me")
 		{
 			_services.Logger.LogInfo(discordMessage.Message);
 
@@ -55,9 +66,39 @@ public sealed class Plugin : IDalamudPlugin
 			return;
 		}
 
-		var args = discordMessage.Topic.Split('@');
+		AtkUnitBase* chatLogAddon;
 
-		_services.Logger.LogInfo($">> {args[0]}@{args[1]}: {discordMessage.Message}");
+		var chatLogAddonPointer = _services.GameGui.GetAddonByName("ChatLog");
+
+		if (chatLogAddonPointer == IntPtr.Zero)
+		{
+			return;
+		}
+		else
+		{
+			chatLogAddon = (AtkUnitBase*) chatLogAddonPointer;
+		}
+
+		if (chatLogAddon->IsVisible)
+		{
+			var args = discordMessage.Topic.Split('@');
+
+			if (args.Length != 2)
+			{
+				return;
+			}
+
+			var message = Chat.Instance.SanitiseText(discordMessage.Message);
+
+			try
+			{
+				Chat.Instance.SendMessage($"/tell {args[0]}@{args[1]} {message}");
+			}
+			catch
+			{
+				return;
+			}
+		}
 	}
 
 	private void OnChatGuiChatMessageReceived(XivChatType messageType, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
@@ -138,5 +179,6 @@ public sealed class Plugin : IDalamudPlugin
 		_services.CommandManager.RemoveHandler("/discordlinkpearl");
 		_services.PluginInterface.UiBuilder.Draw -= _services.PluginConfigurationWindow.Draw;
 		_services.PluginInterface.UiBuilder.OpenConfigUi -= OpenConfigurationWindow;
+		ECommonsMain.Dispose();
 	}
 }

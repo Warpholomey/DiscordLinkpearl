@@ -9,6 +9,7 @@ public sealed class Services(
 	DalamudPluginInterface pluginInterface,
 	ICommandManager commandManager,
 	IClientState clientState,
+	IGameGui gameGui,
 	IChatGui chatGui)
 {
 	private Logger? _logger;
@@ -19,6 +20,7 @@ public sealed class Services(
 	public DalamudPluginInterface PluginInterface { get; } = pluginInterface;
 	public ICommandManager CommandManager { get; } = commandManager;
 	public IClientState ClientState { get; } = clientState;
+	public IGameGui GameGui { get; } = gameGui;
 	public IChatGui ChatGui { get; } = chatGui;
 
 	public Configuration Configuration

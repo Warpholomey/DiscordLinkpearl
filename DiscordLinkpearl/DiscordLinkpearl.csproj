@@ -10,6 +10,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\DiscordModule\DiscordModule.csproj" />
+		<ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 		<Reference Include="FFXIVClientStructs">
