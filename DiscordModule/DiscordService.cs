@@ -1,6 +1,7 @@
 using Discord;
 using Discord.WebSocket;
 
+using System;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading;
@@ -8,19 +9,27 @@ using System.Threading.Tasks;
 
 namespace DiscordModule;
 
-public sealed class DiscordService(IManagedConfiguration managedConfiguration)
+public sealed class DiscordService(IManagedConfiguration managedConfiguration, ILogger logger)
 {
 	private const TokenType DiscordTokenType = TokenType.Bot;
 
+	private readonly DiscordSocketClient _discordSocketClient = new(_config);
 	private readonly IManagedConfiguration _managedConfiguration = managedConfiguration;
-	private readonly DiscordSocketClient _discordSocketClient = new();
+	private readonly ILogger _logger = logger;
+
+	private static readonly DiscordSocketConfig _config = new()
+	{
+		GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent,
+	};
 
 	public ConnectionState ConnectionState => _discordSocketClient.ConnectionState;
 	public ulong DiscordId { get; private set; }
 	public string? GuildName { get; private set; }
 	public ConcurrentQueue<QueueMessage> MessageQueue { get; } = new();
 
-	public async Task DiscordConnectionHandlerAsync(CancellationToken cancellationToken)
+	public async Task DiscordConnectionHandlerAsync(
+		Func<DiscordMessage, Task> discordMessageHandler,
+		CancellationToken cancellationToken)
 	{
 		await _discordSocketClient.LoginAsync(
 			DiscordTokenType,
@@ -31,11 +40,40 @@ public sealed class DiscordService(IManagedConfiguration managedConfiguration)
 		_discordSocketClient.Connected += OnDiscordSocketClientConnected;
 		_discordSocketClient.JoinedGuild += OnDiscordSocketClientJoinedGuild;
 		_discordSocketClient.GuildAvailable += OnDiscordSocketClientGuildAvailable;
+		_discordSocketClient.MessageReceived += (socketMessage) => DiscordSocketClientMessageReceived(
+			socketMessage,
+			discordMessageHandler);
 
 		await _discordSocketClient.StartAsync();
 		messageQueueProcessing.Start();
 		cancellationToken.WaitHandle.WaitOne();
 		await _discordSocketClient.StopAsync();
+	}
+
+	private async Task DiscordSocketClientMessageReceived(SocketMessage socketMessage, Func<DiscordMessage, Task> discordMessageHandler)
+	{
+		if (socketMessage.Source != MessageSource.User)
+		{
+			return;
+		}
+
+		if (socketMessage.Channel is SocketTextChannel socketTextChannel)
+		{
+			if (socketTextChannel.Guild.Id != _managedConfiguration.GuildId)
+			{
+				_logger.LogError("Have you added a bot to more than one server?");
+				_logger.LogError("Messages can only be read from the last authorized server.");
+				_logger.LogError("Consider creating a new bot or removing it from redundant servers.");
+
+				return;
+			}
+
+			var discordMessage = new DiscordMessage(
+				socketTextChannel.Topic,
+				socketMessage.Content);
+
+			await discordMessageHandler(discordMessage);
+		}
 	}
 
 	private async Task SendMessageAsync(QueueMessage queueMessage)

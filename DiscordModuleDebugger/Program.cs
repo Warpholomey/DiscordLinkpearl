@@ -12,20 +12,28 @@ public static class Program
 
 	public static void Main()
 	{
-		var discordModule = new DiscordModuleManager();
 		var managedConfiguration = File.Exists(ConfigurationFile)
 			? LoadConfiguration()
 			: InitializeConfiguration();
+		var discordModule = new DiscordModuleManager(
+			managedConfiguration,
+			Logger.Instance);
 
 		if (managedConfiguration.GuildId == default || string.IsNullOrWhiteSpace(managedConfiguration.DiscordKey))
 		{
 			return;
 		}
 
-		discordModule.TryRestartDiscordModule(managedConfiguration);
-		discordModule.TrySendMessage("0000-0000-0000-0001", "Thancred Waters", "Hey, this is Thancred!");
+		discordModule.OnDiscordMessage += DiscordModuleOnDiscordMessage;
+		discordModule.TryRestartDiscordModule();
+		discordModule.TrySendMessage("Thancred Waters@Twintania", "Thancred Waters", "Hey, this is Thancred!");
 		Console.ReadKey();
 		discordModule.TryStopDiscordModule();
+	}
+
+	private static void DiscordModuleOnDiscordMessage(DiscordMessage discordMessage)
+	{
+		Console.WriteLine($">> {discordMessage.Topic}: {discordMessage.Message}");
 	}
 
 	private static IManagedConfiguration LoadConfiguration()

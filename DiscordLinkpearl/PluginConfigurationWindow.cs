@@ -42,15 +42,6 @@ public sealed class PluginConfigurationWindow(DiscordModuleManager discordModule
 
 		ImGui.SameLine();
 
-		if (ImGui.Button("Close"))
-		{
-			_discordKey = _configuration.DiscordKey;
-			_isEnabled = _configuration.IsEnabled;
-			_isVisible = false;
-		}
-
-		ImGui.SameLine();
-
 		if (ImGui.Button("Apply"))
 		{
 			_configuration.DiscordKey = _discordKey;
@@ -79,6 +70,12 @@ public sealed class PluginConfigurationWindow(DiscordModuleManager discordModule
 		ImGui.TextColored(GetStatusColor(_discordModuleManager.ConnectionState), $"Status: {info}");
 
 		ImGui.End();
+	}
+
+	public void ReloadConfigurationValues()
+	{
+		_discordKey = _configuration.DiscordKey;
+		_isEnabled = _configuration.IsEnabled;
 	}
 
 	private static Vector4 GetStatusColor(ConnectionState connectionState) => connectionState switch

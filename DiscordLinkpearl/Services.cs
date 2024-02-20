@@ -7,14 +7,62 @@ namespace DiscordLinkpearl;
 
 public sealed class Services(
 	DalamudPluginInterface pluginInterface,
-	DiscordModuleManager discordModuleManager,
 	ICommandManager commandManager,
 	IClientState clientState,
 	IChatGui chatGui)
 {
+	private Logger? _logger;
+	private Configuration? _configuration;
+	private DiscordModuleManager? _discordModuleManager;
+	private PluginConfigurationWindow? _pluginConfigurationWindow;
+
 	public DalamudPluginInterface PluginInterface { get; } = pluginInterface;
-	public DiscordModuleManager DiscordModuleManager { get; } = discordModuleManager;
 	public ICommandManager CommandManager { get; } = commandManager;
 	public IClientState ClientState { get; } = clientState;
 	public IChatGui ChatGui { get; } = chatGui;
+
+	public Configuration Configuration
+	{
+		get
+		{
+			if (_configuration == null)
+			{
+				_configuration = (Configuration?) PluginInterface.GetPluginConfig() ?? new Configuration();
+
+				_configuration.OnConfigurationChanged += _ =>
+				{
+					PluginInterface.SavePluginConfig(_configuration);
+				};
+			}
+
+			return _configuration;
+		}
+	}
+
+	public DiscordModuleManager DiscordModuleManager
+	{
+		get
+		{
+			_discordModuleManager ??= new DiscordModuleManager(Configuration, Logger);
+			return _discordModuleManager;
+		}
+	}
+
+	public PluginConfigurationWindow PluginConfigurationWindow
+	{
+		get
+		{
+			_pluginConfigurationWindow ??= new PluginConfigurationWindow(DiscordModuleManager, Configuration);
+			return _pluginConfigurationWindow;
+		}
+	}
+
+	public ILogger Logger
+	{
+		get
+		{
+			_logger ??= new Logger(ChatGui);
+			return _logger;
+		}
+	}
 }

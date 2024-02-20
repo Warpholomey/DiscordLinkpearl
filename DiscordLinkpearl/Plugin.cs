@@ -14,22 +14,15 @@ namespace DiscordLinkpearl;
 public sealed class Plugin : IDalamudPlugin
 {
 	private readonly Services _services;
-	private readonly Configuration _configuration;
-	private readonly PluginConfigurationWindow _pluginConfigurationWindow;
 
 	public Plugin(DalamudPluginInterface dalamudPluginInterface)
 	{
-		_services = dalamudPluginInterface.Create<Services>(new DiscordModuleManager())
+		_services = dalamudPluginInterface.Create<Services>()
 			?? throw new InvalidOperationException(
 				"Error initializing services!");
 
-		_configuration = (Configuration?) _services.PluginInterface.GetPluginConfig() ?? new Configuration();
-		_pluginConfigurationWindow = new PluginConfigurationWindow(
-			_services.DiscordModuleManager,
-			_configuration);
-
 		_services.PluginInterface.UiBuilder.OpenConfigUi += OpenConfigurationWindow;
-		_services.PluginInterface.UiBuilder.Draw += _pluginConfigurationWindow.Draw;
+		_services.PluginInterface.UiBuilder.Draw += _services.PluginConfigurationWindow.Draw;
 
 		_services.CommandManager.AddHandler("/discordlinkpearl", new CommandInfo((command, args) => OpenConfigurationWindow())
 		{
@@ -41,16 +34,30 @@ public sealed class Plugin : IDalamudPlugin
 			HelpMessage = "Toggle messages routing.",
 		});
 
-		_configuration.OnConfigurationChanged += _ =>
-		{
-			_services.PluginInterface.SavePluginConfig(_configuration);
-		};
-
-		_configuration.OnConfigurationChanged += TryRestartDiscordModule;
+		_services.DiscordModuleManager.OnDiscordMessage += DiscordModuleManagerOnDiscordMessage;
+		_services.Configuration.OnConfigurationChanged += TryRestartDiscordModule;
 
 		TryRestartDiscordModule();
 
 		_services.ChatGui.ChatMessage += OnChatGuiChatMessageReceived;
+	}
+
+	private void DiscordModuleManagerOnDiscordMessage(DiscordMessage discordMessage)
+	{
+		if (discordMessage.Topic == "me")
+		{
+			_services.Logger.LogInfo(discordMessage.Message);
+
+			return;
+		}
+		else if (!discordMessage.Topic.Contains('@'))
+		{
+			return;
+		}
+
+		var args = discordMessage.Topic.Split('@');
+
+		_services.Logger.LogInfo($">> {args[0]}@{args[1]}: {discordMessage.Message}");
 	}
 
 	private void OnChatGuiChatMessageReceived(XivChatType messageType, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
@@ -94,39 +101,42 @@ public sealed class Plugin : IDalamudPlugin
 	{
 		if (shouldRestartDiscordModule)
 		{
-			_services.DiscordModuleManager.TryRestartDiscordModule(_configuration);
+			_services.DiscordModuleManager.TryRestartDiscordModule();
 		}
 	}
 
 	private void OpenConfigurationWindow()
 	{
-		_pluginConfigurationWindow.Show();
+		_services.PluginConfigurationWindow.ReloadConfigurationValues();
+		_services.PluginConfigurationWindow.Show();
 	}
 
 	private void ToggleMessagesRouting()
 	{
-		_configuration.IsEnabled = !_configuration.IsEnabled;
+		_services.Configuration.IsEnabled = !_services.Configuration.IsEnabled;
 
-		if (_configuration.IsEnabled)
+		if (_services.Configuration.IsEnabled)
 		{
-			_services.ChatGui.Print("Discord Linkpearl was enabled!");
+			_services.Logger.LogInfo("Going online...");
 		}
 		else
 		{
-			_services.ChatGui.Print("Discord Linkpearl was disabled!");
+			_services.Logger.LogInfo("Going offline...");
 		}
 
-		_configuration.Save(true);
+		_services.PluginConfigurationWindow.ReloadConfigurationValues();
+		_services.Configuration.Save(true);
 	}
 
 	public void Dispose()
 	{
 		_services.ChatGui.ChatMessage -= OnChatGuiChatMessageReceived;
+		_services.DiscordModuleManager.OnDiscordMessage -= DiscordModuleManagerOnDiscordMessage;
 		_services.DiscordModuleManager.TryStopDiscordModule();
-		_configuration.ClearHandlers();
+		_services.Configuration.ClearHandlers();
 		_services.CommandManager.RemoveHandler("/dlp");
 		_services.CommandManager.RemoveHandler("/discordlinkpearl");
-		_services.PluginInterface.UiBuilder.Draw -= _pluginConfigurationWindow.Draw;
+		_services.PluginInterface.UiBuilder.Draw -= _services.PluginConfigurationWindow.Draw;
 		_services.PluginInterface.UiBuilder.OpenConfigUi -= OpenConfigurationWindow;
 	}
 }
