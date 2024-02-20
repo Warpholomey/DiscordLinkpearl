@@ -1,7 +1,7 @@
 {
 	"Author": "Warpholomey",
 	"Name": "DiscordLinkpearl",
-	"Punchline": "",
+	"Punchline": "Receive and send private messages from other players to Discord.",
 	"RepoUrl": "https://github.com/Warpholomey/DiscordLinkpearl/",
 	"Description": "Allows you to receive and send private messages from other players to Discord. Unlike some other plugins, this one aims to keep the settings minimal and support **sending** messages from Discord.",
 	"InternalName": "DiscordLinkpearl",
