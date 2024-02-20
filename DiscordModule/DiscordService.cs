@@ -70,7 +70,8 @@ public sealed class DiscordService(IManagedConfiguration managedConfiguration, I
 
 			var discordMessage = new DiscordMessage(
 				socketTextChannel.Topic,
-				socketMessage.Content);
+				socketMessage.Content,
+				socketTextChannel);
 
 			await discordMessageHandler(discordMessage);
 		}

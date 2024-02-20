@@ -13,6 +13,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace DiscordLinkpearl;
 
@@ -49,7 +50,7 @@ public sealed class Plugin : IDalamudPlugin
 		_services.ChatGui.ChatMessage += OnChatGuiChatMessageReceived;
 	}
 
-	private unsafe void DiscordModuleManagerOnDiscordMessage(DiscordMessage discordMessage)
+	private void DiscordModuleManagerOnDiscordMessage(DiscordMessage discordMessage)
 	{
 		if (_services.ClientState.LocalPlayer == null)
 		{
@@ -66,39 +67,61 @@ public sealed class Plugin : IDalamudPlugin
 			return;
 		}
 
+		var cancelMessageReason = TrySendChatMessage(discordMessage);
+
+		if (cancelMessageReason != null)
+		{
+			Task.Run(async() => await discordMessage.TryCancelAsync(cancelMessageReason));
+		}
+	}
+
+	private unsafe string? TrySendChatMessage(DiscordMessage discordMessage)
+	{
 		AtkUnitBase* chatLogAddon;
 
 		var chatLogAddonPointer = _services.GameGui.GetAddonByName("ChatLog");
 
 		if (chatLogAddonPointer == IntPtr.Zero)
 		{
-			return;
+			return "Unknown send error!";
 		}
 		else
 		{
 			chatLogAddon = (AtkUnitBase*) chatLogAddonPointer;
 		}
 
-		if (chatLogAddon->IsVisible)
+		if (!chatLogAddon->IsVisible)
 		{
-			var args = discordMessage.Topic.Split('@');
-
-			if (args.Length != 2)
-			{
-				return;
-			}
-
-			var message = Chat.Instance.SanitiseText(discordMessage.Message);
-
-			try
-			{
-				Chat.Instance.SendMessage($"/tell {args[0]}@{args[1]} {message}");
-			}
-			catch
-			{
-				return;
-			}
+			return "Sending private messages is currently unavailable!";
 		}
+
+		var args = discordMessage.Topic.Split('@');
+
+		if (args.Length != 2)
+		{
+			return "This text channel has incorrect topic!";
+		}
+
+		var message = Chat.Instance.SanitiseText(discordMessage.Message);
+
+		try
+		{
+			Chat.Instance.SendMessage($"/tell {args[0]}@{args[1]} {message}");
+		}
+		catch (ArgumentException)
+		{
+			var max = 492 - (args[0].Length + args[1].Length);
+
+			var cur = message.Length;
+
+			return $"The message is too big ({cur}/{max})!";
+		}
+		catch
+		{
+			return "Unknown send error!";
+		}
+
+		return null;
 	}
 
 	private void OnChatGuiChatMessageReceived(XivChatType messageType, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
