@@ -3,7 +3,7 @@
 	"Name": "DiscordLinkpearl",
 	"Punchline": "",
 	"RepoUrl": "https://github.com/Warpholomey/DiscordLinkpearl/",
-	"Description": "A plugin for FFXIV that allows you to receive and send private messages from other players to Discord. Unlike some other plugins, this one aims to keep the settings minimal and support **sending** messages from Discord.",
+	"Description": "Allows you to receive and send private messages from other players to Discord. Unlike some other plugins, this one aims to keep the settings minimal and support **sending** messages from Discord.",
 	"InternalName": "DiscordLinkpearl",
 	"ApplicableVersion": "any",
 	"Tags": []
