@@ -1,5 +1,6 @@
 using Dalamud.Interface;
 using Dalamud.Interface.Internal;
+
 using Discord;
 
 using DiscordModule;
@@ -123,7 +124,7 @@ public sealed class PluginConfigurationWindow
 
 		if (ImGui.BeginTabItem("Step 3"))
 		{
-			ImGui.Text("On the same page below enable «Message Content Intend»:");
+			ImGui.Text("On the same page below enable «Message Content Intent»:");
 			TryDrawCenteredImage(_helpImage04TextureWrap);
 			ImGui.Text("Now you can save bot settings and close browser window.");
 			ImGui.EndTabItem();
