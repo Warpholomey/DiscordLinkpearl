@@ -54,7 +54,10 @@ public sealed class Services(
 	{
 		get
 		{
-			_pluginConfigurationWindow ??= new PluginConfigurationWindow(DiscordModuleManager, Configuration);
+			_pluginConfigurationWindow ??= new PluginConfigurationWindow(
+				DiscordModuleManager,
+				Configuration,
+				PluginInterface.UiBuilder);
 			return _pluginConfigurationWindow;
 		}
 	}
