@@ -1,6 +1,3 @@
-using Dalamud.Interface;
-using Dalamud.Interface.Internal;
-
 using Discord;
 
 using DiscordModule;
@@ -11,7 +8,8 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Numerics;
-using System.Reflection;
+
+using ThreadLoadImageHandler = ECommons.ImGuiMethods.ThreadLoadImageHandler;
 
 namespace DiscordLinkpearl;
 
@@ -21,54 +19,22 @@ public sealed class PluginConfigurationWindow
 
 	private readonly DiscordModuleManager _discordModuleManager;
 	private readonly Configuration _configuration;
-	private readonly UiBuilder _uiBuilder;
+	private readonly string _assemblyDirectory;
 
 	private string _discordKey;
 	private bool _isEnabled;
 
-	private readonly IDalamudTextureWrap? _helpImage01TextureWrap;
-	private readonly IDalamudTextureWrap? _helpImage02TextureWrap;
-	private readonly IDalamudTextureWrap? _helpImage03TextureWrap;
-	private readonly IDalamudTextureWrap? _helpImage04TextureWrap;
-	private readonly IDalamudTextureWrap? _helpImage05TextureWrap;
-	private readonly IDalamudTextureWrap? _helpImage06TextureWrap;
-
 	public PluginConfigurationWindow(
 		DiscordModuleManager discordModuleManager,
 		Configuration configuration,
-		UiBuilder uiBuilder)
+		string assemblyDirectory)
 	{
 		_discordModuleManager = discordModuleManager;
 		_configuration = configuration;
-		_uiBuilder = uiBuilder;
+		_assemblyDirectory = assemblyDirectory;
 
 		_discordKey = configuration.DiscordKey;
 		_isEnabled = configuration.IsEnabled;
-
-		var assembly = Assembly.GetExecutingAssembly();
-
-		_helpImage01TextureWrap = TryLoadImageFromResources(assembly, "01.png");
-		_helpImage02TextureWrap = TryLoadImageFromResources(assembly, "02.png");
-		_helpImage03TextureWrap = TryLoadImageFromResources(assembly, "03.png");
-		_helpImage04TextureWrap = TryLoadImageFromResources(assembly, "04.png");
-		_helpImage05TextureWrap = TryLoadImageFromResources(assembly, "05.png");
-		_helpImage06TextureWrap = TryLoadImageFromResources(assembly, "06.png");
-	}
-
-	private IDalamudTextureWrap? TryLoadImageFromResources(Assembly assembly, string img)
-	{
-		using var s = assembly.GetManifestResourceStream($"DiscordLinkpearl.Resources.{img}");
-
-		if (s == null)
-		{
-			return null;
-		}
-
-		using var ms = new MemoryStream();
-
-		s.CopyTo(ms);
-
-		return _uiBuilder.LoadImage(ms.ToArray());
 	}
 
 	public void Show()
@@ -87,7 +53,7 @@ public sealed class PluginConfigurationWindow
 
 		ImGui.BeginTabBar("#docs");
 
-		if (ImGui.BeginTabItem("Help"))
+		if (ImGui.BeginTabItem("Main"))
 		{
 			ImGui.Text("Follow the instructions on tabs «Step 1-4» above to set up plugin.");
 			ImGui.EndTabItem();
@@ -107,7 +73,7 @@ public sealed class PluginConfigurationWindow
 					});
 			}
 
-			TryDrawCenteredImage(_helpImage01TextureWrap);
+			TryDrawCenteredImage("Help/01.png");
 			ImGui.Text("You can specify any application name — only you will see it.");
 			ImGui.EndTabItem();
 		}
@@ -115,9 +81,9 @@ public sealed class PluginConfigurationWindow
 		if (ImGui.BeginTabItem("Step 2"))
 		{
 			ImGui.Text("Open the «bot» section of newly created application:");
-			TryDrawCenteredImage(_helpImage02TextureWrap);
+			TryDrawCenteredImage("Help/02.png");
 			ImGui.Text("Generate a new token for your bot:");
-			TryDrawCenteredImage(_helpImage03TextureWrap);
+			TryDrawCenteredImage("Help/03.png");
 			ImGui.Text("Then copy it into the «Discord Key» field below.");
 			ImGui.EndTabItem();
 		}
@@ -125,17 +91,17 @@ public sealed class PluginConfigurationWindow
 		if (ImGui.BeginTabItem("Step 3"))
 		{
 			ImGui.Text("On the same page below enable «Message Content Intent»:");
-			TryDrawCenteredImage(_helpImage04TextureWrap);
+			TryDrawCenteredImage("Help/04.png");
 			ImGui.Text("Now you can save bot settings and close browser window.");
 			ImGui.EndTabItem();
 		}
 
 		if (ImGui.BeginTabItem("Step 4"))
 		{
-			ImGui.Text("Press «Apply» button below and wait until status indicator turns green saying «Connected»:");
-			TryDrawCenteredImage(_helpImage05TextureWrap);
+			ImGui.Text("Press «Apply Settings» button below and wait until status indicator turns green saying «Connected»:");
+			TryDrawCenteredImage("Help/05.png");
 			ImGui.Text("Now you can press «Authorize» button to add bot to your server:");
-			TryDrawCenteredImage(_helpImage06TextureWrap);
+			TryDrawCenteredImage("Help/06.png");
 
 			ImGui.TextColored(
 				new Vector4(1f, 0f, 0f, 1f),
@@ -150,11 +116,11 @@ public sealed class PluginConfigurationWindow
 		ImGui.InputText("Discord Key", ref _discordKey, 100, ImGuiInputTextFlags.Password);
 		ImGui.PopItemWidth();
 
-		ImGui.Checkbox("Enabled?", ref _isEnabled);
+		ImGui.Checkbox("Enable Messages Forwarding", ref _isEnabled);
 
 		ImGui.SameLine();
 
-		if (ImGui.Button("Apply"))
+		if (ImGui.Button("Apply Settings"))
 		{
 			_configuration.DiscordKey = _discordKey;
 			_configuration.IsEnabled = _isEnabled;
@@ -199,19 +165,19 @@ public sealed class PluginConfigurationWindow
 		_ => throw new NotImplementedException(),
 	};
 
-	private static void TryDrawCenteredImage(IDalamudTextureWrap? dalamudTextureWrap)
+	private void TryDrawCenteredImage(string img)
 	{
-		if (dalamudTextureWrap == null)
-		{
-			return;
-		}
+		var url = Path.Combine(_assemblyDirectory, img);
 
-		var windowDimensions = ImGui.GetWindowSize();
-		ImGui.SetCursorPosX((windowDimensions.X - dalamudTextureWrap.Width) * 0.5f);
-		ImGui.Image(
-			dalamudTextureWrap.ImGuiHandle,
-			new Vector2(
-				dalamudTextureWrap.Width,
-				dalamudTextureWrap.Height));
+		if (ThreadLoadImageHandler.TryGetTextureWrap(url, out var dalamudTextureWrap))
+		{
+			var windowDimensions = ImGui.GetWindowSize();
+			ImGui.SetCursorPosX((windowDimensions.X - dalamudTextureWrap.Width) * 0.5f);
+			ImGui.Image(
+				dalamudTextureWrap.ImGuiHandle,
+				new Vector2(
+					dalamudTextureWrap.Width,
+					dalamudTextureWrap.Height));
+		}
 	}
 }

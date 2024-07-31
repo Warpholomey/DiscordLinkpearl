@@ -21,7 +21,7 @@ public sealed class Plugin : IDalamudPlugin
 {
 	private readonly Services _services;
 
-	public Plugin(DalamudPluginInterface dalamudPluginInterface)
+	public Plugin(IDalamudPluginInterface dalamudPluginInterface)
 	{
 		_services = dalamudPluginInterface.Create<Services>()
 			?? throw new InvalidOperationException(
@@ -48,6 +48,7 @@ public sealed class Plugin : IDalamudPlugin
 		TryRestartDiscordModule();
 
 		_services.ChatGui.ChatMessage += OnChatGuiChatMessageReceived;
+		_services.PluginInterface.UiBuilder.OpenMainUi += OpenConfigurationWindow;
 	}
 
 	private void DiscordModuleManagerOnDiscordMessage(DiscordMessage discordMessage)
@@ -124,7 +125,7 @@ public sealed class Plugin : IDalamudPlugin
 		return null;
 	}
 
-	private void OnChatGuiChatMessageReceived(XivChatType messageType, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+	private void OnChatGuiChatMessageReceived(XivChatType messageType, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
 	{
 		if (isHandled || _services.ClientState.LocalPlayer == null)
 		{
@@ -194,6 +195,7 @@ public sealed class Plugin : IDalamudPlugin
 
 	public void Dispose()
 	{
+		_services.PluginInterface.UiBuilder.OpenMainUi -= OpenConfigurationWindow;
 		_services.ChatGui.ChatMessage -= OnChatGuiChatMessageReceived;
 		_services.DiscordModuleManager.OnDiscordMessage -= DiscordModuleManagerOnDiscordMessage;
 		_services.DiscordModuleManager.TryStopDiscordModule();

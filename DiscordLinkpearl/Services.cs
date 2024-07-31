@@ -6,7 +6,7 @@ using DiscordModule;
 namespace DiscordLinkpearl;
 
 public sealed class Services(
-	DalamudPluginInterface pluginInterface,
+	IDalamudPluginInterface pluginInterface,
 	ICommandManager commandManager,
 	IClientState clientState,
 	IGameGui gameGui,
@@ -17,7 +17,7 @@ public sealed class Services(
 	private DiscordModuleManager? _discordModuleManager;
 	private PluginConfigurationWindow? _pluginConfigurationWindow;
 
-	public DalamudPluginInterface PluginInterface { get; } = pluginInterface;
+	public IDalamudPluginInterface PluginInterface { get; } = pluginInterface;
 	public ICommandManager CommandManager { get; } = commandManager;
 	public IClientState ClientState { get; } = clientState;
 	public IGameGui GameGui { get; } = gameGui;
@@ -57,7 +57,7 @@ public sealed class Services(
 			_pluginConfigurationWindow ??= new PluginConfigurationWindow(
 				DiscordModuleManager,
 				Configuration,
-				PluginInterface.UiBuilder);
+				PluginInterface.AssemblyLocation.DirectoryName!);
 			return _pluginConfigurationWindow;
 		}
 	}
