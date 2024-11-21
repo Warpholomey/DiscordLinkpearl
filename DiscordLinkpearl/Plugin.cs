@@ -139,7 +139,7 @@ public sealed class Plugin : IDalamudPlugin
 
 			if (sender.Payloads.FirstOrDefault(p => p.Type == PayloadType.Player) is PlayerPayload playerLink)
 			{
-				userId = playerLink.PlayerName + "@" + playerLink.World.Name.RawString;
+				userId = playerLink.PlayerName + "@" + playerLink.World.Value.Name.ExtractText();
 				userName = playerLink.PlayerName;
 			}
 			else
