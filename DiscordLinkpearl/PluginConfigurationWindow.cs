@@ -2,7 +2,7 @@ using Discord;
 
 using DiscordModule;
 
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 using System;
 using System.Diagnostics;
@@ -174,7 +174,7 @@ public sealed class PluginConfigurationWindow
 			var windowDimensions = ImGui.GetWindowSize();
 			ImGui.SetCursorPosX((windowDimensions.X - dalamudTextureWrap.Width) * 0.5f);
 			ImGui.Image(
-				dalamudTextureWrap.ImGuiHandle,
+				dalamudTextureWrap.Handle,
 				new Vector2(
 					dalamudTextureWrap.Width,
 					dalamudTextureWrap.Height));

@@ -78,22 +78,11 @@ public sealed class Plugin : IDalamudPlugin
 
 	private unsafe string? TrySendChatMessage(DiscordMessage discordMessage)
 	{
-		AtkUnitBase* chatLogAddon;
-
 		var chatLogAddonPointer = _services.GameGui.GetAddonByName("ChatLog");
 
-		if (chatLogAddonPointer == IntPtr.Zero)
+		if (chatLogAddonPointer == IntPtr.Zero || !chatLogAddonPointer.IsVisible)
 		{
-			return "Unknown send error!";
-		}
-		else
-		{
-			chatLogAddon = (AtkUnitBase*) chatLogAddonPointer;
-		}
-
-		if (!chatLogAddon->IsVisible)
-		{
-			return "Sending private messages is currently unavailable!";
+			return "Unknown send error or sending messages is currently unavailable!";
 		}
 
 		var args = discordMessage.Topic.Split('@');
@@ -103,11 +92,11 @@ public sealed class Plugin : IDalamudPlugin
 			return "This text channel has incorrect topic!";
 		}
 
-		var message = Chat.Instance.SanitiseText(discordMessage.Message);
+		var message = Chat.SanitiseText(discordMessage.Message);
 
 		try
 		{
-			Chat.Instance.SendMessage($"/tell {args[0]}@{args[1]} {message}");
+			Chat.SendMessage($"/tell {args[0]}@{args[1]} {message}");
 		}
 		catch (ArgumentException)
 		{
