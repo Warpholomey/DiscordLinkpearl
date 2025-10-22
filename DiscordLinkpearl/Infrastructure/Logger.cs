@@ -1,3 +1,5 @@
+using Dalamud.Game.Text;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 
 using DiscordModule;
@@ -10,11 +12,29 @@ public sealed class Logger(IChatGui chatGui) : ILogger
 
 	public void LogError(string message)
 	{
-		_chatGui.PrintError($"[Discord Linkpearl] Error: {message}");
+		_chatGui.Print(
+			new XivChatEntry
+			{
+				Type = XivChatType.Debug,
+				Message = new SeStringBuilder()
+					.AddUiForeground(17)
+					.AddText($"[Discord Linkpearl] Error: {message}")
+					.AddUiForegroundOff()
+					.Build(),
+			});
 	}
 
 	public void LogInfo(string message)
 	{
-		_chatGui.Print($"[Discord Linkpearl] Info: {message}");
+		_chatGui.Print(
+			new XivChatEntry
+			{
+				Type = XivChatType.Debug,
+				Message = new SeStringBuilder()
+					.AddUiForeground(32)
+					.AddText($"[Discord Linkpearl] Info: {message}")
+					.AddUiForegroundOff()
+					.Build(),
+			});
 	}
 }

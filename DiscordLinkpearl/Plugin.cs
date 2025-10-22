@@ -8,8 +8,7 @@ using DiscordModule;
 
 using ECommons;
 using ECommons.Automation;
-
-using FFXIVClientStructs.FFXIV.Component.GUI;
+using ECommons.DalamudServices;
 
 using System;
 using System.Linq;
@@ -53,7 +52,7 @@ public sealed class Plugin : IDalamudPlugin
 
 	private void DiscordModuleManagerOnDiscordMessage(DiscordMessage discordMessage)
 	{
-		if (_services.ClientState.LocalPlayer == null)
+		if (!Svc.Condition.Any())
 		{
 			return;
 		}
