@@ -8,7 +8,7 @@ namespace DiscordLinkpearl;
 public sealed class Services(
 	IDalamudPluginInterface pluginInterface,
 	ICommandManager commandManager,
-	IClientState clientState,
+	IObjectTable objectTable,
 	IGameGui gameGui,
 	IChatGui chatGui)
 {
@@ -19,7 +19,7 @@ public sealed class Services(
 
 	public IDalamudPluginInterface PluginInterface { get; } = pluginInterface;
 	public ICommandManager CommandManager { get; } = commandManager;
-	public IClientState ClientState { get; } = clientState;
+	public IObjectTable ObjectTable { get; } = objectTable;
 	public IGameGui GameGui { get; } = gameGui;
 	public IChatGui ChatGui { get; } = chatGui;
 

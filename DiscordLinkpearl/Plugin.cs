@@ -115,7 +115,7 @@ public sealed class Plugin : IDalamudPlugin
 
 	private void OnChatGuiChatMessageReceived(XivChatType messageType, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
 	{
-		if (isHandled || _services.ClientState.LocalPlayer == null)
+		if (isHandled || _services.ObjectTable.LocalPlayer == null)
 		{
 			return;
 		}
@@ -132,10 +132,10 @@ public sealed class Plugin : IDalamudPlugin
 			}
 			else
 			{
-				if (sender.TextValue.Contains(_services.ClientState.LocalPlayer.Name.TextValue))
+				if (sender.TextValue.Contains(_services.ObjectTable.LocalPlayer.Name.TextValue))
 				{
 					userId = "me";
-					userName = _services.ClientState.LocalPlayer.Name.TextValue;
+					userName = _services.ObjectTable.LocalPlayer.Name.TextValue;
 				}
 				else
 				{
